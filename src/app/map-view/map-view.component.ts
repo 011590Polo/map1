@@ -1553,8 +1553,18 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       // Intentar obtener la posición actual (esto solicita permisos automáticamente si es necesario)
       const position = await this.geoService.getCurrentPosition();
       
+      let me=this;
+      //si LOS MARACDORES INICIALES  EL DRAGGABLE Y EL MARCADOR  REALTIME  ESTAN TAN NULOS O VACIOS  llmaar sus funciones para actualizarlos
+      if(this.searchMarker==null || this.userLocationMarker==null){
+        me.updateUserLocation(position);
+        me.setupSearchMarker([position.lat, position.lng]);
+        me.updateSearchQueryFromPosition(position);
+      }
       // Si se obtuvo la posición, el GPS está activado
-      console.log('✅ GPS activado y permisos concedidos');
+      console.log('✅ GPS 1'+JSON.stringify(navigator.geolocation));
+      console.log('✅ GPS 2'+JSON.stringify(estadoPermisos));
+      console.log('✅ GPS 3'+JSON.stringify(this.verificandoGPS));
+
       this.gpsPermisoDenegado = false;
       this.modalGPSAbierto = false;
       this.verificandoGPS = false;
