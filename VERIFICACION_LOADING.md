@@ -156,3 +156,4 @@ Todos los loading están usando `text-primary`, que es una clase de color válid
 **Versión DaisyUI verificada**: 5.0.0
 
 
+
