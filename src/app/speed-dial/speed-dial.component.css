@@ -1,0 +1,87 @@
+.speed-dial-container {
+  position: fixed;
+  bottom: 70px;
+  right: 45px;
+  z-index: 9999;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.speed-dial-actions {
+  position: relative;
+  width: 0;
+  height: 0;
+}
+
+.speed-dial-item {
+  position: absolute;
+  bottom: 0;
+  right: 0;
+  transform: translate(0, 0) scale(0);
+  opacity: 0;
+  transition: transform 0.25s ease-in-out, opacity 0.25s ease-in-out;
+  pointer-events: none;
+}
+
+.speed-dial-container.open .speed-dial-item {
+  pointer-events: auto;
+}
+
+/* 90° arriba - Mi ubicación */
+.speed-dial-container.open .speed-dial-item-1 {
+  transform: translate(0, -80px) scale(1);
+  opacity: 1;
+}
+
+/* 45° arriba-derecha - Filtros */
+.speed-dial-container.open .speed-dial-item-2 {
+  transform: translate(56px, -56px) scale(1);
+  opacity: 1;
+}
+
+/* 0° derecha - Cambiar estilo */
+.speed-dial-container.open .speed-dial-item-3 {
+  transform: translate(80px, 0) scale(1);
+  opacity: 1;
+}
+
+/* 135° arriba-izquierda - Centrar mapa */
+.speed-dial-container.open .speed-dial-item-4 {
+  transform: translate(-56px, -56px) scale(1);
+  opacity: 1;
+}
+
+/* 180° izquierda - Vehículos */
+.speed-dial-container.open .speed-dial-item-5 {
+  transform: translate(-80px, 0) scale(1);
+  opacity: 1;
+}
+
+/* 225° abajo-izquierda - Agregar marcador */
+.speed-dial-container.open .speed-dial-item-6 {
+  transform: translate(-56px, 56px) scale(1);
+  opacity: 1;
+}
+
+/* 270° abajo - Cargar marcadores guardados */
+.speed-dial-container.open .speed-dial-item-7 {
+  transform: translate(0, 80px) scale(1);
+  opacity: 1;
+}
+
+.speed-dial-fab {
+  transition: transform 0.25s ease-in-out, box-shadow 0.25s ease-in-out;
+  transform-origin: center;
+  box-shadow: 0 14px 30px rgba(0, 0, 0, 0.55);
+  border: 1px solid rgba(255, 255, 255, 0.16);
+}
+
+.speed-dial-fab.open {
+  transform: rotate(45deg);
+}
+
+.speed-dial-fab:hover {
+  transform: scale(1.08) rotate(45deg);
+  box-shadow: 0 18px 40px rgba(0, 0, 0, 0.7);
+}

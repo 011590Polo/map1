@@ -1,0 +1,67 @@
+<div class="card bg-base-100 shadow-xl p-4 w-80 max-h-96 overflow-y-auto">
+  <div class="flex items-center justify-between mb-3">
+    <h2 class="font-bold text-lg">🔔 Notificaciones</h2>
+    <span *ngIf="hasUnreadNotifications" class="badge badge-primary badge-sm">
+      {{ unreadCount }}
+    </span>
+  </div>
+
+  <!-- Lista de notificaciones -->
+  <div *ngIf="notifications.length > 0" class="space-y-2 mb-3">
+    <div 
+      *ngFor="let n of notifications" 
+      class="p-3 rounded-lg transition-all shadow-sm hover:shadow-md cursor-pointer"
+      [class]="getNotificationColorClass(n.type)"
+      [class.opacity-60]="n.read"
+      [class.bg-base-200/50]="n.read"
+      (click)="markAsRead(n)"
+    >
+      <div class="flex items-start justify-between gap-2">
+        <div class="flex-1">
+          <div class="flex items-center gap-2 mb-1">
+            <span class="text-sm font-semibold">{{ getNotificationIcon(n.type) }}</span>
+            <p class="text-sm font-medium" [class.font-normal]="n.read">{{ n.message }}</p>
+          </div>
+          <small class="text-xs opacity-60">{{ n.timestamp | date:'short' }}</small>
+        </div>
+        <button 
+          *ngIf="!n.read"
+          type="button"
+          class="btn btn-ghost btn-xs btn-circle"
+          (click)="removeNotification(n); $event.stopPropagation()"
+          title="Eliminar notificación"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-3 w-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+      </div>
+    </div>
+  </div>
+
+  <!-- Estado vacío -->
+  <div *ngIf="notifications.length === 0" class="text-center py-8">
+    <div class="text-4xl mb-2">🔔</div>
+    <p class="text-sm text-base-content/60">No hay notificaciones</p>
+  </div>
+
+  <!-- Botones de acción -->
+  <div *ngIf="notifications.length > 0" class="flex justify-between gap-2 mt-3 pt-3 border-t border-base-300">
+    <button 
+      type="button"
+      class="btn btn-outline btn-xs flex-1"
+      (click)="markAllAsRead()"
+      [disabled]="!hasUnreadNotifications"
+    >
+      Marcar leídas
+    </button>
+    <button 
+      type="button"
+      class="btn btn-error btn-xs flex-1"
+      (click)="clearAll()"
+    >
+      Limpiar
+    </button>
+  </div>
+</div>
+

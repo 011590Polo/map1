@@ -1,0 +1,112 @@
+<div class="speed-dial-container" [class.open]="open">
+  <div class="speed-dial-actions">
+    <!-- 90° arriba: Mi ubicación -->
+    <button
+      type="button"
+      aria-label="Mi ubicación"
+      class="speed-dial-item speed-dial-item-1 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-emerald-400 to-lime-500
+             shadow-2xl shadow-emerald-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="miUbicacion()"
+    >
+      <span class="text-lg">📍</span>
+    </button>
+
+    <!-- 45° arriba-derecha: Abrir filtros -->
+    <button
+      type="button"
+      aria-label="Abrir filtros"
+      class="speed-dial-item speed-dial-item-2 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-cyan-400 to-teal-500
+             shadow-2xl shadow-cyan-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="abrirFiltros()"
+    >
+      <span class="text-lg">⚙️</span>
+    </button>
+
+    <!-- 0° derecha: Cambiar estilo -->
+    <button
+      type="button"
+      aria-label="Cambiar estilo"
+      class="speed-dial-item speed-dial-item-3 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-sky-400 to-indigo-500
+             shadow-2xl shadow-sky-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="cambiarEstilo()"
+    >
+      <span class="text-lg">🎨</span>
+    </button>
+
+    <!-- 135° arriba-izquierda: Centrar mapa -->
+    <button
+      type="button"
+      aria-label="Centrar mapa"
+      class="speed-dial-item speed-dial-item-4 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-amber-400 to-orange-500
+             shadow-2xl shadow-amber-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="centrarMapa()"
+    >
+      <span class="text-lg">🎯</span>
+    </button>
+
+    <!-- 180° izquierda: Lista de vehículos -->
+    <button
+      type="button"
+      aria-label="Lista de vehículos"
+      class="speed-dial-item speed-dial-item-5 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-pink-500 to-rose-500
+             shadow-2xl shadow-pink-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="mostrarVehiculos()"
+    >
+      <span class="text-lg">🚚</span>
+    </button>
+
+    <!-- 225° abajo-izquierda: Agregar marcador -->
+    <button
+      type="button"
+      aria-label="Agregar marcador"
+      class="speed-dial-item speed-dial-item-6 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-purple-500 to-fuchsia-500
+             shadow-2xl shadow-purple-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="abrirModalMarcador()"
+    >
+      <span class="text-lg">📌</span>
+    </button>
+
+    <!-- 270° abajo: Cargar marcadores guardados -->
+    <button
+      type="button"
+      aria-label="Cargar marcadores guardados"
+      class="speed-dial-item speed-dial-item-7 rounded-full w-12 h-12 flex items-center justify-center
+             bg-gradient-to-r from-green-500 to-emerald-500
+             shadow-2xl shadow-green-500/40 border border-white/20
+             text-white hover:scale-110 transition-all duration-300 ease-out"
+      (click)="cargarMarcadoresGuardados()"
+    >
+      <span class="text-lg">🗺️</span>
+    </button>
+  </div>
+
+  <!-- FAB principal -->
+  <button
+    type="button"
+    aria-label="Menú de acciones del mapa"
+    class="speed-dial-fab rounded-full w-16 h-16 flex items-center justify-center
+           bg-gradient-to-r from-violet-500 via-indigo-500 to-sky-500
+           shadow-2xl shadow-indigo-700/60 border border-white/20
+           text-white transition-all duration-300 ease-out"
+    [class.open]="open"
+    (click)="toggleMenu()"
+  >
+    <span class="text-3xl leading-none">
+      {{ open ? '✕' : '+' }}
+    </span>
+  </button>
+</div>
+
+

@@ -1,0 +1,715 @@
+<div class="h-full w-full flex flex-col bg-base-100">
+  <!-- Sistema de Alertas DaisyUI -->
+  <div 
+    *ngIf="alertaVisible" 
+    class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[10002] w-11/12 max-w-md transition-all duration-300"
+    [class.animate-slide-down]="alertaVisible"
+  >
+    <div 
+      role="alert" 
+      class="alert shadow-lg"
+      [class.alert-success]="alertaTipo === 'success'"
+      [class.alert-error]="alertaTipo === 'error'"
+      [class.alert-warning]="alertaTipo === 'warning'"
+      [class.alert-info]="alertaTipo === 'info'"
+    >
+      <!-- Icono según el tipo -->
+      <svg 
+        *ngIf="alertaTipo === 'success'"
+        xmlns="http://www.w3.org/2000/svg" 
+        class="h-6 w-6 shrink-0 stroke-current" 
+        fill="none" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <svg 
+        *ngIf="alertaTipo === 'error'"
+        xmlns="http://www.w3.org/2000/svg" 
+        class="h-6 w-6 shrink-0 stroke-current" 
+        fill="none" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+      </svg>
+      <svg 
+        *ngIf="alertaTipo === 'warning'"
+        xmlns="http://www.w3.org/2000/svg" 
+        class="h-6 w-6 shrink-0 stroke-current" 
+        fill="none" 
+        viewBox="0 0 24 24"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+      </svg>
+      <svg 
+        *ngIf="alertaTipo === 'info'"
+        xmlns="http://www.w3.org/2000/svg" 
+        fill="none" 
+        viewBox="0 0 24 24" 
+        class="h-6 w-6 shrink-0 stroke-current"
+      >
+        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+      </svg>
+      
+      <!-- Mensaje -->
+      <span class="flex-1">{{ alertaMensaje }}</span>
+      
+      <!-- Botón para cerrar -->
+      <button 
+        type="button"
+        class="btn btn-sm btn-circle btn-ghost"
+        (click)="cerrarAlerta()"
+        aria-label="Cerrar alerta"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+        </svg>
+      </button>
+    </div>
+  </div>
+
+  <!-- Overlay de Loading Global -->
+  <div 
+    *ngIf="loadingVisible" 
+    class="fixed inset-0 bg-black/50 backdrop-blur-sm z-[10003] flex items-center justify-center"
+  >
+    <div class="bg-base-100 rounded-box shadow-2xl p-8 flex flex-col items-center gap-4 min-w-[200px]">
+      <span class="loading loading-spinner loading-lg text-primary"></span>
+      <p class="text-base-content font-semibold">{{ loadingMensaje }}</p>
+    </div>
+  </div>
+
+  <!-- Navbar de DaisyUI -->
+  <div class="navbar bg-base-100 shadow-sm relative z-[20000]">
+    <div class="navbar-start">
+      <div class="dropdown">
+        <div tabindex="0" role="button" class="btn btn-ghost btn-circle">
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h7" />
+          </svg>
+        </div>
+        <ul tabindex="0" class="menu menu-sm dropdown-content bg-base-100 rounded-box z-[20001] mt-3 w-52 p-2 shadow">
+          <li><a>Homepage</a></li>
+          <li><a>Portfolio</a></li>
+          <li><a>About</a></li>
+        </ul>
+      </div>
+    </div>
+
+    <div class="navbar-center">
+      <a class="btn btn-ghost text-xl">OETAS</a>
+    </div>
+
+    <div class="navbar-end">
+      <button 
+        type="button"
+        class="btn btn-ghost btn-circle"
+        (click)="toggleSearchBar()"
+        [class.active]="searchBarVisible"
+        title="Buscar"
+        aria-label="Mostrar barra de búsqueda"
+      >
+        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+        </svg>
+      </button>
+
+      <div class="relative">
+        <button 
+          type="button"
+          class="btn btn-ghost btn-circle"
+          (click)="toggleNotifications()"
+          title="Notificaciones"
+          aria-label="Notificaciones"
+        >
+          <div class="indicator">
+            <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+            </svg>
+            <span 
+              *ngIf="unreadNotificationsCount > 0"
+              class="badge badge-xs badge-primary indicator-item"
+            >
+              {{ unreadNotificationsCount }}
+            </span>
+          </div>
+        </button>
+        
+        <!-- Panel de notificaciones -->
+        <div 
+          *ngIf="notificationsPanelVisible"
+          class="absolute right-0 top-12 z-[20002]"
+        >
+          <app-notifications-panel></app-notifications-panel>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Barra de búsqueda (condicional) -->
+  <div *ngIf="searchBarVisible" class="w-full px-0 pb-3 pt-2">
+    <div class="form-control w-full">
+      <label
+        class="input input-bordered flex items-center gap-2 bg-white shadow-2xl rounded-full w-full focus-within:outline-none focus-within:ring-0 focus-within:border-base-300"
+      >
+        <span class="text-primary text-lg">
+          🔍
+        </span>
+        <input
+          type="text"
+          class="grow bg-transparent outline-none w-full focus:outline-none focus:ring-0 focus:border-transparent"
+          placeholder="Buscar dirección o lugar..."
+          [ngModel]="searchQuery"
+          (ngModelChange)="onSearchChange($event)"
+        />
+        <span
+          *ngIf="searchInProgress"
+          class="loading loading-spinner loading-sm text-primary"
+        ></span>
+        <span
+          *ngIf="!searchInProgress && searchResultValid === true"
+          class="text-success text-lg"
+          title="Dirección válida"
+        >
+          ✔
+        </span>
+        <span
+          *ngIf="!searchInProgress && searchResultValid === false"
+          class="text-error text-lg"
+          title="No se encontró la dirección"
+        >
+          !
+        </span>
+        <button
+          *ngIf="searchQuery && searchQuery.trim().length > 0"
+          type="button"
+          class="btn btn-ghost btn-sm btn-circle text-base-content/60 hover:text-base-content hover:bg-base-200"
+          (click)="limpiarBusqueda()"
+          title="Limpiar búsqueda"
+          aria-label="Limpiar búsqueda"
+        >
+          <span class="text-lg leading-none">✕</span>
+        </button>
+      </label>
+      <ul
+        *ngIf="searchResults.length > 0"
+        class="mt-2 menu bg-white rounded-xl shadow-2xl border border-base-200 max-h-60 overflow-auto text-sm w-full"
+      >
+        <li
+          *ngFor="let result of searchResults"
+          (click)="seleccionarResultado(result)"
+          class="hover:bg-base-200 cursor-pointer"
+        >
+          <a class="flex items-center w-full">
+            <span class="mr-2 text-primary">📍</span>
+            <span class="line-clamp-2 w-full">{{ result.displayName }}</span>
+          </a>
+        </li>
+      </ul>
+      <p *ngIf="searchError" class="mt-1 text-xs text-error w-full">
+        {{ searchError }}
+      </p>
+    </div>
+  </div>
+
+  <!-- Mapa -->
+  <div class="map-wrapper relative flex-1">
+    <div id="map"></div>
+    <app-speed-dial 
+      (layerChange)="cambiarCapa($event)"
+      (openMarkerModal)="abrirModalMarcador()"
+      (loadSavedMarkers)="cargarMarcadoresGuardados()"
+    ></app-speed-dial>
+  </div>
+
+  <!-- Modal para agregar marcador - Diseño móvil compacto -->
+  <div class="modal z-[10000]" [class.modal-open]="modalMarcadorAbierto" *ngIf="modalMarcadorAbierto">
+    <div class="modal-box w-11/12 max-w-md shadow-2xl p-4">
+      <!-- Header compacto -->
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-lg text-base-content">📌 Agregar Marcador</h3>
+        <button
+          type="button"
+          class="btn btn-sm btn-circle btn-ghost"
+          (click)="cerrarModalMarcador()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Selección de categoría con selector -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Categoría <span class="text-error">*</span></span>
+        </label>
+        <select
+          class="select select-bordered select-sm w-full"
+          [class.select-warning]="selectedCategory === 'alerta'"
+          [class.select-error]="selectedCategory === 'peligro'"
+          [class.select-info]="selectedCategory === 'informacion'"
+          [(ngModel)]="selectedCategory"
+        >
+          <option value="" disabled>Selecciona una categoría</option>
+          <option value="alerta">⚠️ Alerta</option>
+          <option value="peligro">🔥 Peligro</option>
+          <option value="informacion">ℹ️ Información</option>
+        </select>
+      </div>
+
+      <!-- Descripción -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Descripción <span class="text-error">*</span></span>
+          <span class="label-text-alt">
+            <span [class.text-success]="descripcionMarcador.length >= 10" 
+                  [class.text-warning]="descripcionMarcador.length > 0 && descripcionMarcador.length < 10"
+                  [class.text-base-content/60]="descripcionMarcador.length === 0"
+                  class="text-xs">
+              {{ descripcionMarcador.length }}/10
+            </span>
+          </span>
+        </label>
+        <textarea
+          class="textarea textarea-bordered textarea-sm focus:textarea-primary"
+          placeholder="Describe el marcador..."
+          rows="3"
+          [(ngModel)]="descripcionMarcador"
+        ></textarea>
+      </div>
+
+      <!-- Archivo adjunto -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Archivo</span>
+          <span class="label-text-alt text-xs text-base-content/60">Opcional</span>
+        </label>
+        <input
+          type="file"
+          class="file-input file-input-bordered file-input-sm file-input-primary w-full"
+          (change)="onFileSelected($event)"
+          accept="image/*,application/pdf,video/*"
+        />
+        <div *ngIf="archivoSeleccionado" class="mt-2">
+          <div class="alert alert-success py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs">{{ archivoSeleccionado.name }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ubicación compacta -->
+      <div class="mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">📍 Ubicación</span>
+        </label>
+        <div class="bg-base-200 rounded-lg p-2">
+          <p class="text-xs font-mono text-base-content/70">
+            {{ coordenadasMarcador?.lat?.toFixed(6) }}, {{ coordenadasMarcador?.lng?.toFixed(6) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="modal-action mt-4 gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-ghost flex-1"
+          (click)="cerrarModalMarcador()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary flex-1 gap-1"
+          [disabled]="!selectedCategory || !descripcionMarcador.trim() || descripcionMarcador.length < 10"
+          (click)="guardarMarcador()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Guardar
+        </button>
+      </div>
+    </div>
+    <div class="modal-backdrop bg-black/50" (click)="cerrarModalMarcador()"></div>
+  </div>
+
+  <!-- Modal de gestión de marcadores guardados -->
+  <div class="modal z-[10000]" [class.modal-open]="modalGestionMarcadoresAbierto" *ngIf="modalGestionMarcadoresAbierto">
+    <div class="modal-box w-11/12 max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">
+      <!-- Header -->
+      <div class="flex items-center justify-between mb-4">
+        <div class="flex items-center gap-3">
+          <div class="avatar placeholder">
+            <div class="bg-primary text-primary-content rounded-full w-12">
+              <span class="text-2xl">🗺️</span>
+            </div>
+          </div>
+          <div>
+            <h3 class="font-bold text-2xl text-base-content">Marcadores Guardados</h3>
+            <p class="text-sm text-base-content/60">Gestiona tus marcadores desde el servidor</p>
+          </div>
+        </div>
+        <button
+          type="button"
+          class="btn btn-sm btn-circle btn-ghost"
+          (click)="cerrarModalGestionMarcadores()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </div>
+<!-- Botones de acción -->
+<div class="modal-action mt-4 gap-1 justify-end flex" *ngIf="!cargandoMarcadores && marcadoresGuardados.length > 0">
+  <button
+    type="button"
+    class="btn btn-xs btn-primary min-h-0 h-8 px-3 gap-1"
+    (click)="cargarMarcadoresEnMapa()"
+    style="font-size: 0.90rem;"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7" />
+    </svg>
+    <span class="hidden md:inline">Cargar en Mapa</span>
+    <span class="inline md:hidden">Cargar</span>
+  </button>
+  <button
+    type="button"
+    class="btn btn-xs btn-outline min-h-0 h-8 px-3 gap-1"
+    (click)="limpiarMarcadoresGuardados()"
+    style="font-size: 0.90rem;"
+    title="Limpiar marcadores del mapa"
+  >
+    <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+    </svg>
+    <span class="hidden md:inline">Limpiar Mapa</span>
+    <span class="inline md:hidden">Limpiar</span>
+  </button>
+</div>
+    
+
+      <!-- Loading state -->
+      <div *ngIf="cargandoMarcadores" class="flex flex-col items-center justify-center py-12">
+        <span class="loading loading-spinner loading-lg text-primary"></span>
+        <p class="mt-4 text-base-content/60">Cargando marcadores...</p>
+      </div>
+
+      <!-- Lista de marcadores usando DaisyUI List -->
+      <div *ngIf="!cargandoMarcadores && marcadoresGuardados.length > 0">
+        <ul class="list bg-base-100 rounded-box shadow-md">
+          <li class="p-4 pb-2 text-xs opacity-60 tracking-wide uppercase">
+            Total de marcadores: {{ marcadoresGuardados.length }}
+          </li>
+          
+          <li *ngFor="let marcador of marcadoresGuardados" class="list-row">
+            <!-- Imagen/Video/Icono según categoría o archivo adjunto -->
+            <div>
+              <img
+                *ngIf="isImage(marcador.archivo)"
+                [src]="getFileUrl(marcador.archivo)"
+                alt="Imagen del marcador"
+                class="size-10 rounded-box object-cover"
+                (error)="$event.target.style.display='none'"
+              />
+              <div
+                *ngIf="isVideo(marcador.archivo)"
+                class="size-10 rounded-box flex items-center justify-center bg-primary/20 cursor-pointer hover:bg-primary/30 transition-colors"
+                (click)="abrirModalVideo(marcador.archivo)"
+                title="Reproducir video"
+              >
+                <svg class="size-6 text-primary" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+                </svg>
+              </div>
+              <div
+                *ngIf="!isImage(marcador.archivo) && !isVideo(marcador.archivo)"
+                class="size-10 rounded-box flex items-center justify-center text-2xl"
+                [class.bg-warning/20]="marcador.categoria === 'alerta'"
+                [class.bg-error/20]="marcador.categoria === 'peligro'"
+                [class.bg-info/20]="marcador.categoria === 'informacion'"
+              >
+                <span *ngIf="marcador.categoria === 'alerta'">⚠️</span>
+                <span *ngIf="marcador.categoria === 'peligro'">🔥</span>
+                <span *ngIf="marcador.categoria === 'informacion'">ℹ️</span>
+              </div>
+            </div>
+            
+            <!-- Información del marcador (segunda columna - crece automáticamente) -->
+            <div>
+              <div>{{ marcador.descripcion }}</div>
+              <div class="text-xs uppercase font-semibold opacity-60">
+                {{ getCategoryName(marcador.categoria) }} • {{ marcador.lat.toFixed(6) }}, {{ marcador.lng.toFixed(6) }}
+                <span *ngIf="marcador.archivo" class="ml-1">
+                  • <span *ngIf="isVideo(marcador.archivo)">🎥 Video</span>
+                  <span *ngIf="isImage(marcador.archivo)">🖼️ Imagen</span>
+                  <span *ngIf="!isVideo(marcador.archivo) && !isImage(marcador.archivo)">📎 Archivo</span>
+                </span>
+              </div>
+            </div>
+            
+            <!-- Botones de acción -->
+            <button
+              *ngIf="isVideo(marcador.archivo)"
+              class="btn btn-square btn-ghost text-primary"
+              (click)="abrirModalVideo(marcador.archivo)"
+              title="Reproducir video"
+            >
+              <svg class="size-[1.2em]" fill="currentColor" viewBox="0 0 20 20" xmlns="http://www.w3.org/2000/svg">
+                <path d="M6.3 2.841A1.5 1.5 0 004 4.11V15.89a1.5 1.5 0 002.3 1.269l9.344-5.89a1.5 1.5 0 000-2.538L6.3 2.84z" />
+              </svg>
+            </button>
+            <button
+              class="btn btn-square btn-ghost"
+              (click)="abrirModalEditarMarcador(marcador)"
+              title="Editar marcador"
+            >
+              <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
+              </svg>
+            </button>
+            <button
+              class="btn btn-square btn-ghost text-error"
+              (click)="eliminarMarcador(marcador)"
+              title="Eliminar marcador"
+            >
+              <svg class="size-[1.2em]" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <rect x="3" y="6" width="18" height="15" rx="2" ry="2"></rect>
+                <path d="M9 10v6"></path>
+                <path d="M15 10v6"></path>
+                <path d="M8 6V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
+                <line x1="1" y1="6" x2="23" y2="6"></line>
+              </svg>
+            </button>
+          </li>
+        </ul>
+      </div>
+
+      <!-- Empty state -->
+      <div *ngIf="!cargandoMarcadores && marcadoresGuardados.length === 0" class="text-center py-12">
+        <div class="text-6xl mb-4">🗺️</div>
+        <h3 class="text-xl font-bold mb-2">No hay marcadores guardados</h3>
+        <p class="text-base-content/60">Crea marcadores desde el mapa para verlos aquí</p>
+      </div>
+
+      
+    </div>
+    <div class="modal-backdrop bg-black/50" (click)="cerrarModalGestionMarcadores()"></div>
+  </div>
+
+  <!-- Modal de editar marcador - Diseño móvil compacto -->
+  <div class="modal z-[10001]" [class.modal-open]="modalEditarMarcadorAbierto" *ngIf="modalEditarMarcadorAbierto">
+    <div class="modal-box w-11/12 max-w-md shadow-2xl p-4">
+      <!-- Header compacto -->
+      <div class="flex items-center justify-between mb-3">
+        <h3 class="font-bold text-lg text-base-content">✏️ Editar Marcador</h3>
+        <button
+          type="button"
+          class="btn btn-sm btn-circle btn-ghost"
+          (click)="cerrarModalEditarMarcador()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Selección de categoría con selector -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Categoría <span class="text-error">*</span></span>
+        </label>
+        <select
+          class="select select-bordered select-sm w-full"
+          [class.select-warning]="selectedCategory === 'alerta'"
+          [class.select-error]="selectedCategory === 'peligro'"
+          [class.select-info]="selectedCategory === 'informacion'"
+          [(ngModel)]="selectedCategory"
+        >
+          <option value="" disabled>Selecciona una categoría</option>
+          <option value="alerta">⚠️ Alerta</option>
+          <option value="peligro">🔥 Peligro</option>
+          <option value="informacion">ℹ️ Información</option>
+        </select>
+      </div>
+
+      <!-- Descripción -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Descripción <span class="text-error">*</span></span>
+          <span class="label-text-alt">
+            <span [class.text-success]="descripcionMarcador.length >= 10" 
+                  [class.text-warning]="descripcionMarcador.length > 0 && descripcionMarcador.length < 10"
+                  [class.text-base-content/60]="descripcionMarcador.length === 0"
+                  class="text-xs">
+              {{ descripcionMarcador.length }}/10
+            </span>
+          </span>
+        </label>
+        <textarea
+          class="textarea textarea-bordered textarea-sm focus:textarea-primary"
+          placeholder="Describe el marcador..."
+          rows="3"
+          [(ngModel)]="descripcionMarcador"
+        ></textarea>
+      </div>
+
+      <!-- Archivo adjunto -->
+      <div class="form-control mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">Archivo</span>
+          <span class="label-text-alt text-xs text-base-content/60">Opcional</span>
+        </label>
+        <input
+          type="file"
+          class="file-input file-input-bordered file-input-sm file-input-primary w-full"
+          (change)="onFileSelected($event)"
+          accept="image/*,application/pdf,video/*"
+        />
+        <div *ngIf="archivoSeleccionado" class="mt-2">
+          <div class="alert alert-success py-2">
+            <svg xmlns="http://www.w3.org/2000/svg" class="stroke-current shrink-0 h-4 w-4" fill="none" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+            <span class="text-xs">{{ archivoSeleccionado.name || 'Archivo existente' }}</span>
+          </div>
+        </div>
+      </div>
+
+      <!-- Ubicación compacta -->
+      <div class="mb-3">
+        <label class="label py-1">
+          <span class="label-text text-sm font-semibold">📍 Ubicación</span>
+        </label>
+        <div class="bg-base-200 rounded-lg p-2">
+          <p class="text-xs font-mono text-base-content/70">
+            {{ coordenadasMarcador?.lat?.toFixed(6) }}, {{ coordenadasMarcador?.lng?.toFixed(6) }}
+          </p>
+        </div>
+      </div>
+
+      <!-- Botones de acción -->
+      <div class="modal-action mt-4 gap-2">
+        <button
+          type="button"
+          class="btn btn-sm btn-ghost flex-1"
+          (click)="cerrarModalEditarMarcador()"
+        >
+          Cancelar
+        </button>
+        <button
+          type="button"
+          class="btn btn-sm btn-primary flex-1 gap-1"
+          [disabled]="!selectedCategory || !descripcionMarcador.trim() || descripcionMarcador.length < 10"
+          (click)="guardarMarcadorEditado()"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7" />
+          </svg>
+          Guardar
+        </button>
+      </div>
+    </div>
+    <div class="modal-backdrop bg-black/50" (click)="cerrarModalEditarMarcador()"></div>
+  </div>
+
+  <!-- Modal de reproducción de video -->
+  <div class="modal z-[10001]" [class.modal-open]="modalVideoAbierto" *ngIf="modalVideoAbierto && videoUrlActual">
+    <div class="modal-box w-11/12 max-w-4xl shadow-2xl p-0 overflow-hidden">
+      <!-- Header -->
+      <div class="flex items-center justify-between p-4 border-b border-base-300">
+        <h3 class="font-bold text-lg text-base-content">🎥 Reproducir Video</h3>
+        <button
+          type="button"
+          class="btn btn-sm btn-circle btn-ghost"
+          (click)="cerrarModalVideo()"
+          aria-label="Cerrar modal"
+        >
+          ✕
+        </button>
+      </div>
+
+      <!-- Video -->
+      <div class="p-4">
+        <video
+          [src]="videoUrlActual"
+          controls
+          class="w-full rounded-box"
+          style="max-height: 70vh;"
+        >
+          Tu navegador no soporta la reproducción de videos.
+        </video>
+      </div>
+
+      <!-- Footer -->
+      <div class="modal-action p-4 border-t border-base-300">
+        <button
+          type="button"
+          class="btn btn-ghost"
+          (click)="cerrarModalVideo()"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+    <div class="modal-backdrop bg-black/50" (click)="cerrarModalVideo()"></div>
+  </div>
+
+  <!-- Modal de Alerta GPS -->
+  <div 
+    class="modal" 
+    [class.modal-open]="modalGPSAbierto"
+    role="dialog"
+    aria-labelledby="gps-modal-title"
+    aria-modal="true"
+  >
+    <div class="modal-box max-w-xs">
+      <h3 id="gps-modal-title" class="font-bold text-base mb-3 flex items-center gap-2">
+        <svg 
+          xmlns="http://www.w3.org/2000/svg" 
+          class="h-5 w-5 text-warning" 
+          fill="none" 
+          viewBox="0 0 24 24" 
+          stroke="currentColor"
+        >
+          <path 
+            stroke-linecap="round" 
+            stroke-linejoin="round" 
+            stroke-width="2" 
+            d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" 
+          />
+        </svg>
+        GPS Requerido
+      </h3>
+      
+      <p class="text-sm mb-4">
+        {{ mensajeGPS }}
+      </p>
+
+      <div class="modal-action gap-2">
+        <button
+          type="button"
+          class="btn btn-primary btn-sm"
+          (click)="intentarActivarGPS()"
+          [disabled]="verificandoGPS"
+        >
+          <span *ngIf="verificandoGPS" class="loading loading-spinner loading-xs mr-2"></span>
+          <span *ngIf="!verificandoGPS">Intentar de nuevo</span>
+          <span *ngIf="verificandoGPS">Verificando...</span>
+        </button>
+        <button
+          type="button"
+          class="btn btn-ghost btn-sm"
+          (click)="cerrarModalGPS()"
+          [disabled]="verificandoGPS"
+        >
+          Cerrar
+        </button>
+      </div>
+    </div>
+    <div class="modal-backdrop bg-black/50" (click)="cerrarModalGPS()"></div>
+  </div>
+</div>

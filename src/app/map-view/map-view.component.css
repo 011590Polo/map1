@@ -1,8 +1,20 @@
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+ :host {
+  display: block;
+  height: 100vh;
+  width: 100%;
+}
 
-/* Estilos globales para el marcador de ubicación del usuario */
+.map-wrapper {
+  height: 100%;
+  width: 100%;
+}
+
+#map {
+  height: 100%;
+  width: 100%;
+}
+
+/* Marcador premium de ubicación del usuario */
 .user-location-marker {
   background: transparent !important;
   border: none !important;
@@ -41,6 +53,22 @@
   z-index: 1001;
 }
 
+/* Animaciones para alertas */
+@keyframes slide-down {
+  from {
+    opacity: 0;
+    transform: translate(-50%, -20px);
+  }
+  to {
+    opacity: 1;
+    transform: translate(-50%, 0);
+  }
+}
+
+.animate-slide-down {
+  animation: slide-down 0.3s ease-out;
+}
+
 @keyframes pulse {
   0% {
     transform: scale(0.95);
@@ -66,5 +94,50 @@
                 0 0 60px rgba(59, 130, 246, 0.4),
                 0 0 80px rgba(59, 130, 246, 0.2);
   }
+}
+
+/* Estilos para el modal */
+.modal {
+  pointer-events: none;
+  opacity: 0;
+  transition: opacity 0.3s ease-in-out;
+}
+
+.modal.modal-open {
+  pointer-events: auto;
+  opacity: 1;
+}
+
+.modal-box {
+  z-index: 10001;
+}
+
+.modal-backdrop {
+  z-index: 10000;
+}
+
+/* Navbar y dropdown - z-index alto para estar por encima de controles del mapa */
+.navbar {
+  position: relative;
+  z-index: 20000 !important;
+}
+
+.navbar .dropdown-content {
+  z-index: 20001 !important;
+  position: absolute !important;
+}
+
+/* Quitar borde negro del focus en la barra de búsqueda */
+.input:focus-within,
+.input input:focus {
+  outline: none !important;
+  border-color: hsl(var(--bc) / 0.2) !important;
+  box-shadow: none !important;
+}
+
+.input input:focus {
+  outline: none !important;
+  border: none !important;
+  box-shadow: none !important;
 }
 
