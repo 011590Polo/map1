@@ -2,7 +2,7 @@
   <!-- Sistema de Alertas DaisyUI -->
   <div 
     *ngIf="alertaVisible" 
-    class="fixed top-4 left-1/2 transform -translate-x-1/2 z-[10002] w-11/12 max-w-md transition-all duration-300"
+    class="fixed top-20 left-1/2 transform -translate-x-1/2 z-[30000] w-11/12 max-w-md transition-all duration-300"
     [class.animate-slide-down]="alertaVisible"
   >
     <div 
@@ -339,7 +339,7 @@
   </div>
 
   <!-- Modal de gestión de marcadores guardados -->
-  <div class="modal z-[10000]" [class.modal-open]="modalGestionMarcadoresAbierto" *ngIf="modalGestionMarcadoresAbierto">
+  <div class="modal z-[20000]" [class.modal-open]="modalGestionMarcadoresAbierto" *ngIf="modalGestionMarcadoresAbierto">
     <div class="modal-box w-11/12 max-w-4xl shadow-2xl max-h-[90vh] overflow-y-auto">
       <!-- Header -->
       <div class="flex items-center justify-between mb-4">
