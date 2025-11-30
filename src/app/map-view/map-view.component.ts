@@ -1530,6 +1530,10 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   /**
    * Valida y activa el GPS al iniciar la aplicación
    */
+  private lastGpsErrorTime: number = 0;
+  private lastGpsErrorCode: number | null = null;
+  private readonly GPS_ERROR_THROTTLE_MS = 60000; // Solo mostrar el mismo error cada 60 segundos
+
   private async validarYActivarGPS(): Promise<void> {
     // Verificar si el navegador soporta geolocalización
     if (!navigator.geolocation) {
@@ -1563,12 +1567,10 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         // Transmitir la ubicación inicial en tiempo real a los demás clientes conectados
         this.enviarUbicacionEnTiempoReal(position);
       }
-      // Si se obtuvo la posición, el GPS está activado
-      console.log('✅ GPS 1'+JSON.stringify(navigator.geolocation));
-      console.log('✅ GPS 2'+JSON.stringify(estadoPermisos));
-      console.log('✅ GPS 3'+JSON.stringify(this.verificandoGPS));
 
-      
+      // Reset error tracking cuando obtenemos una posición exitosa
+      this.lastGpsErrorTime = 0;
+      this.lastGpsErrorCode = null;
 
       this.gpsPermisoDenegado = false;
       this.modalGPSAbierto = false;
@@ -1578,6 +1580,12 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     } catch (error: any) {
       this.verificandoGPS = false;
       
+      // Throttle de errores: solo mostrar modal si ha pasado suficiente tiempo desde el último error similar
+      const now = Date.now();
+      const shouldShowError = 
+        this.lastGpsErrorCode !== error.code || 
+        (now - this.lastGpsErrorTime) > this.GPS_ERROR_THROTTLE_MS;
+
       // Manejar diferentes tipos de errores
       let mensaje = 'Por favor, para conocer todos los lugares del mundo es necesario que actives el GPS';
       
@@ -1592,12 +1600,26 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         mensaje = 'No se pudo obtener tu ubicación. Por favor, verifica que el GPS esté activado en tu dispositivo.';
         this.gpsPermisoDenegado = false;
       } else if (error.code === 3) {
-        mensaje = 'Tiempo de espera agotado. Por favor, verifica que el GPS esté activado y vuelve a intentar.';
-        this.gpsPermisoDenegado = false;
+        // Para errores de timeout, solo loggear una vez y no mostrar modal repetidamente
+        if (shouldShowError) {
+          console.warn('⚠️ Timeout al obtener ubicación GPS. El seguimiento continuará intentando en segundo plano.');
+        }
+        // No mostrar modal para timeouts repetidos - el usuario puede usar la app sin GPS
+        this.lastGpsErrorTime = now;
+        this.lastGpsErrorCode = error.code;
+        this.verificandoGPS = false;
+        this.gpsValidado = true; // Marcar como validado para no bloquear la app
+        return;
       }
       
-      console.warn('⚠️ Error al obtener ubicación:', error);
-      this.mostrarModalGPS(mensaje);
+      // Solo mostrar error en consola si no es timeout
+      if (error.code !== 3 && shouldShowError) {
+        console.warn('⚠️ Error al obtener ubicación:', error.code === 1 ? 'Permiso denegado' : error.code === 2 ? 'Ubicación no disponible' : error.message);
+        this.mostrarModalGPS(mensaje);
+      }
+      
+      this.lastGpsErrorTime = now;
+      this.lastGpsErrorCode = error.code;
     }
   }
 

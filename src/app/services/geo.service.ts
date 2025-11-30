@@ -22,6 +22,9 @@ export class GeoService {
   public currentPosition$: Observable<GeoPosition | null> = this.currentPositionSubject.asObservable();
   private lastSentPosition: { lat: number; lng: number } | null = null;
   private readonly MIN_DISTANCE_TO_SEND = 5; // Enviar si se movió al menos 5 metros
+  private lastErrorTime: number = 0;
+  private lastErrorCode: number | null = null;
+  private readonly ERROR_THROTTLE_MS = 30000; // Solo mostrar el mismo error cada 30 segundos
 
   constructor(
     private socketService: SocketService,
@@ -52,11 +55,15 @@ export class GeoService {
     const options: PositionOptions = {
       enableHighAccuracy: true,
       maximumAge: 500,
-      timeout: 10000
+      timeout: 20000 // Aumentado a 20 segundos para dar más tiempo al GPS
     };
 
     this.watchId = navigator.geolocation.watchPosition(
       (position: GeolocationPosition) => {
+        // Reset error tracking cuando obtenemos una posición exitosa
+        this.lastErrorTime = 0;
+        this.lastErrorCode = null;
+        
         const geoPosition: GeoPosition = {
           lat: position.coords.latitude,
           lng: position.coords.longitude,
@@ -72,7 +79,29 @@ export class GeoService {
         this.enviarUbicacionSiNecesario(geoPosition);
       },
       (error: GeolocationPositionError) => {
-        console.error('Error de geolocalización:', error);
+        // Throttle de errores: solo mostrar el mismo error cada 30 segundos
+        const now = Date.now();
+        const shouldLogError = 
+          this.lastErrorCode !== error.code || 
+          (now - this.lastErrorTime) > this.ERROR_THROTTLE_MS;
+
+        if (shouldLogError) {
+          const errorMessages: Record<number, string> = {
+            1: 'Permiso de geolocalización denegado',
+            2: 'Ubicación no disponible',
+            3: 'Timeout al obtener ubicación GPS (continuando en segundo plano)'
+          };
+          const errorMsg = errorMessages[error.code] || 'Error desconocido';
+          // Para timeouts, usar console.debug para ser menos intrusivo
+          if (error.code === 3) {
+            console.debug(`ℹ️ ${errorMsg}`);
+          } else {
+            console.warn(`⚠️ Error de geolocalización (${errorMsg}):`, error.message || errorMsg);
+          }
+          this.lastErrorTime = now;
+          this.lastErrorCode = error.code;
+        }
+        
         this.currentPositionSubject.next(null);
       },
       options
@@ -103,11 +132,15 @@ export class GeoService {
       const options: PositionOptions = {
         enableHighAccuracy: true,
         maximumAge: 5000,
-        timeout: 10000
+        timeout: 20000 // Aumentado a 20 segundos para dar más tiempo al GPS
       };
 
       navigator.geolocation.getCurrentPosition(
         (position: GeolocationPosition) => {
+          // Reset error tracking cuando obtenemos una posición exitosa
+          this.lastErrorTime = 0;
+          this.lastErrorCode = null;
+          
           const geoPosition: GeoPosition = {
             lat: position.coords.latitude,
             lng: position.coords.longitude,
@@ -119,6 +152,30 @@ export class GeoService {
           resolve(geoPosition);
         },
         (error: GeolocationPositionError) => {
+          // Throttle de errores: solo mostrar el mismo error cada 30 segundos
+          const now = Date.now();
+          const shouldLogError = 
+            this.lastErrorCode !== error.code || 
+            (now - this.lastErrorTime) > this.ERROR_THROTTLE_MS;
+
+          if (shouldLogError) {
+            const errorMessages: Record<number, string> = {
+              1: 'Permiso de geolocalización denegado',
+              2: 'Ubicación no disponible',
+              3: 'Timeout al obtener ubicación GPS (continuando en segundo plano)'
+            };
+            const errorMsg = errorMessages[error.code] || 'Error desconocido';
+            // Para timeouts, mostrar mensaje más silencioso
+            if (error.code === 3) {
+              console.debug(`ℹ️ ${errorMsg}`);
+            } else {
+              console.warn(`⚠️ Error al obtener posición (${errorMsg})`);
+            }
+          }
+          
+          this.lastErrorTime = now;
+          this.lastErrorCode = error.code;
+          
           reject(error);
         },
         options
