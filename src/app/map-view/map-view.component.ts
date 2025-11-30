@@ -1559,11 +1559,16 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         me.updateUserLocation(position);
         me.setupSearchMarker([position.lat, position.lng]);
         me.updateSearchQueryFromPosition(position);
+        
+        // Transmitir la ubicación inicial en tiempo real a los demás clientes conectados
+        this.enviarUbicacionEnTiempoReal(position);
       }
       // Si se obtuvo la posición, el GPS está activado
       console.log('✅ GPS 1'+JSON.stringify(navigator.geolocation));
       console.log('✅ GPS 2'+JSON.stringify(estadoPermisos));
       console.log('✅ GPS 3'+JSON.stringify(this.verificandoGPS));
+
+      
 
       this.gpsPermisoDenegado = false;
       this.modalGPSAbierto = false;
@@ -1630,5 +1635,35 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     
     // Intentar validar nuevamente
     await this.validarYActivarGPS();
+  }
+
+  /**
+   * Envía la ubicación en tiempo real a los demás clientes conectados
+   */
+  private async enviarUbicacionEnTiempoReal(position: GeoPosition): Promise<void> {
+    try {
+      const userId = await this.userService.getUserId();
+      const socket = this.socketService.getSocket();
+
+      if (socket && socket.connected) {
+        socket.emit('ubicacion-actual', {
+          userId,
+          lat: position.lat,
+          lng: position.lng,
+          speed: position.speed || 0,
+          timestamp: Date.now()
+        });
+        console.log('📍 Ubicación transmitida en tiempo real:', { 
+          userId, 
+          lat: position.lat, 
+          lng: position.lng, 
+          speed: position.speed 
+        });
+      } else {
+        console.warn('⚠️ Socket no conectado, no se puede enviar ubicación');
+      }
+    } catch (error) {
+      console.error('Error al enviar ubicación en tiempo real:', error);
+    }
   }
 }
