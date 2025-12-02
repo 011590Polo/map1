@@ -502,7 +502,7 @@
   </div>
 
   <!-- Modal de editar marcador - Diseño móvil compacto -->
-  <div class="modal z-[10001]" [class.modal-open]="modalEditarMarcadorAbierto" *ngIf="modalEditarMarcadorAbierto">
+  <div class="modal z-[20001]" [class.modal-open]="modalEditarMarcadorAbierto" *ngIf="modalEditarMarcadorAbierto">
     <div class="modal-box w-11/12 max-w-md shadow-2xl p-4">
       <!-- Header compacto -->
       <div class="flex items-center justify-between mb-3">
@@ -510,7 +510,7 @@
         <button
           type="button"
           class="btn btn-sm btn-circle btn-ghost"
-          (click)="cerrarModalEditarMarcador()"
+          (click)="cerrarModalEditarMarcador()" 
           aria-label="Cerrar modal"
         >
           ✕

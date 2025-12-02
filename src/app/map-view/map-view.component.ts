@@ -104,6 +104,9 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   private socketSubscriptions: Subscription[] = [];
   private socketListenersInicializados: boolean = false;
 
+  // Wake Lock para evitar que la pantalla se apague en móviles
+  private wakeLock: WakeLockSentinel | null = null;
+
   constructor(
     private geoService: GeoService,
     private apiService: ApiService,
@@ -163,6 +166,8 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
 
   ngAfterViewInit(): void {
     this.initMap();
+    // Activar Wake Lock para evitar que la pantalla se apague
+    this.activarWakeLock();
     // Validar GPS antes de inicializar geolocalización
     this.validarYActivarGPS().then(() => {
       if (this.gpsValidado) {
@@ -177,6 +182,9 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   }
 
   ngOnDestroy(): void {
+    // Desactivar Wake Lock
+    this.desactivarWakeLock();
+    
     // Detener geolocalización
     this.geoService.stopTracking();
     if (this.geoSubscription) {
@@ -1449,9 +1457,18 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   private initUbicacionesTiempoReal(): void {
     const socket = this.socketService.getSocket();
     
-    // Escuchar ubicaciones de otros usuarios
+    // Escuchar ubicaciones de otros usuarios (actualizaciones en tiempo real)
     socket.on('ubicacion-usuario', (data: { userId: string; lat: number; lng: number; speed: number; timestamp: number }) => {
       this.pintarOActualizarUbicacion(data);
+    });
+
+    // Escuchar todas las ubicaciones de usuarios ya conectados cuando este usuario se conecta
+    socket.on('ubicaciones-usuarios-conectados', (ubicaciones: Array<{ userId: string; lat: number; lng: number; speed: number; timestamp: number }>) => {
+      console.log(`📍 Recibidas ${ubicaciones.length} ubicación(es) de usuarios ya conectados`);
+      // Procesar cada ubicación
+      ubicaciones.forEach(ubicacion => {
+        this.pintarOActualizarUbicacion(ubicacion);
+      });
     });
   }
 
@@ -1686,6 +1703,76 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       }
     } catch (error) {
       console.error('Error al enviar ubicación en tiempo real:', error);
+    }
+  }
+
+  /**
+   * Activa el Wake Lock para evitar que la pantalla se apague en dispositivos móviles
+   * Compatible con Android Chrome y iOS Safari (iOS 16.4+)
+   */
+  private async activarWakeLock(): Promise<void> {
+    // Verificar si la API de Wake Lock está disponible
+    if (!navigator.wakeLock) {
+      console.warn('⚠️ Wake Lock API no está disponible en este navegador');
+      return;
+    }
+
+    try {
+      // Solicitar Wake Lock de tipo 'screen'
+      this.wakeLock = await navigator.wakeLock.request('screen');
+      console.log('✅ Wake Lock activado - La pantalla permanecerá encendida');
+
+      // Escuchar cuando el Wake Lock se libera (por ejemplo, cuando el usuario cambia de pestaña)
+      this.wakeLock.addEventListener('release', () => {
+        console.log('⚠️ Wake Lock liberado');
+        // Intentar reactivarlo automáticamente cuando la página vuelve a estar visible
+        document.addEventListener('visibilitychange', this.reactivarWakeLockOnVisible, { once: true });
+      });
+    } catch (error: any) {
+      // Manejar errores comunes
+      if (error.name === 'NotAllowedError') {
+        console.warn('⚠️ Wake Lock denegado - El usuario debe interactuar con la página primero');
+        // Intentar activar después de la primera interacción del usuario
+        document.addEventListener('click', this.activarWakeLockOnInteraction, { once: true });
+        document.addEventListener('touchstart', this.activarWakeLockOnInteraction, { once: true });
+      } else if (error.name === 'NotSupportedError') {
+        console.warn('⚠️ Wake Lock no soportado en este navegador');
+      } else {
+        console.error('❌ Error al activar Wake Lock:', error);
+      }
+    }
+  }
+
+  /**
+   * Intenta activar Wake Lock después de la primera interacción del usuario
+   */
+  private activarWakeLockOnInteraction = async (): Promise<void> => {
+    await this.activarWakeLock();
+  };
+
+  /**
+   * Reactiva el Wake Lock cuando la página vuelve a estar visible
+   */
+  private reactivarWakeLockOnVisible = async (): Promise<void> => {
+    if (document.visibilityState === 'visible' && !this.wakeLock) {
+      // Esperar un pequeño delay antes de reactivar
+      await new Promise(resolve => setTimeout(resolve, 100));
+      await this.activarWakeLock();
+    }
+  };
+
+  /**
+   * Desactiva el Wake Lock
+   */
+  private async desactivarWakeLock(): Promise<void> {
+    if (this.wakeLock) {
+      try {
+        await this.wakeLock.release();
+        this.wakeLock = null;
+        console.log('✅ Wake Lock desactivado');
+      } catch (error) {
+        console.error('❌ Error al desactivar Wake Lock:', error);
+      }
     }
   }
 }
