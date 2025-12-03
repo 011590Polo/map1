@@ -1703,7 +1703,8 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         me.updateSearchQueryFromPosition(position);
         
         // Transmitir la ubicación inicial en tiempo real a los demás clientes conectados
-        this.enviarUbicacionEnTiempoReal(position);
+        this.enviarUbicacionEnTiempoReal(position);      
+
       }
 
       // Reset error tracking cuando obtenemos una posición exitosa

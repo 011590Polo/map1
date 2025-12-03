@@ -232,12 +232,13 @@ export class GeoService {
   /**
    * Obtiene las coordenadas actuales (alias para compatibilidad)
    */
-  async getCurrentCoords(): Promise<{ lat: number; lng: number; speed: number }> {
+  async getCurrentCoords(): Promise<{ lat: number; lng: number; speed: number; accuracy: number }> {
     const position = await this.getCurrentPosition();
     return {
       lat: position.lat,
       lng: position.lng,
-      speed: position.speed || 0
+      speed: position.speed || 0,
+      accuracy: position.accuracy
     };
   }
 
@@ -256,9 +257,10 @@ export class GeoService {
           lat: coords.lat,
           lng: coords.lng,
           speed: coords.speed || 0,
+          accuracy: coords.accuracy || null,
           timestamp: Date.now()
         });
-        console.log('📍 Ubicación inicial enviada:', { userId, lat: coords.lat, lng: coords.lng, speed: coords.speed });
+        console.log('📍 Ubicación inicial enviada:', { userId, lat: coords.lat, lng: coords.lng, speed: coords.speed, accuracy: coords.accuracy });
       }
     } catch (error) {
       console.error('Error al enviar ubicación inicial:', error);
@@ -299,6 +301,7 @@ export class GeoService {
           lat: position.lat,
           lng: position.lng,
           speed: speed,
+          accuracy: position.accuracy || null,
           timestamp: Date.now()
         });
 
