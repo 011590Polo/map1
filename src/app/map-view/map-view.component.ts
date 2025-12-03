@@ -66,6 +66,10 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   modalEditarMarcadorAbierto: boolean = false;
   cargandoMarcadores: boolean = false;
 
+  // Modal de imagen en grande
+  selectedImage: string | null = null;
+  showImageModal: boolean = false;
+
   // Sistema de alertas DaisyUI
   alertaVisible: boolean = false;
   alertaMensaje: string = '';
@@ -1340,6 +1344,23 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   cerrarModalVideo(): void {
     this.modalVideoAbierto = false;
     this.videoUrlActual = null;
+  }
+
+  /**
+   * Abre el modal para mostrar una imagen en pantalla grande
+   * @param imageUrl - URL de la imagen a mostrar
+   */
+  openImageModal(imageUrl: string): void {
+    this.selectedImage = imageUrl;
+    this.showImageModal = true;
+  }
+
+  /**
+   * Cierra el modal de imagen
+   */
+  closeImageModal(): void {
+    this.showImageModal = false;
+    this.selectedImage = null;
   }
 
   /**

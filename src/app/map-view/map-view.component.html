@@ -411,11 +411,13 @@
             <!-- Imagen/Video/Icono según categoría o archivo adjunto -->
             <div>
               <img
-                *ngIf="isImage(marcador.archivo)"
+                *ngIf="isImage(marcador.archivo) && getFileUrl(marcador.archivo)"
                 [src]="getFileUrl(marcador.archivo)"
                 alt="Imagen del marcador"
-                class="size-10 rounded-box object-cover"
+                class="size-10 rounded-md object-cover shadow-md cursor-pointer hover:scale-105 transition-transform duration-200"
+                (click)="openImageModal(getFileUrl(marcador.archivo)!)"
                 (error)="$event.target.style.display='none'"
+                title="Haz clic para ver la imagen en grande"
               />
               <div
                 *ngIf="isVideo(marcador.archivo)"
@@ -712,5 +714,43 @@
       </div>
     </div>
     <div class="modal-backdrop bg-black/50" (click)="cerrarModalGPS()"></div>
+  </div>
+
+  <!-- Modal de Imagen en Grande -->
+  <div 
+    class="modal z-[30000]" 
+    [class.modal-open]="showImageModal" 
+    *ngIf="showImageModal && selectedImage"
+    role="dialog"
+    aria-labelledby="image-modal-title"
+    aria-modal="true"
+  >
+    <div class="modal-box max-w-5xl w-11/12 p-0 bg-transparent shadow-none">
+      <!-- Contenedor de la imagen con fondo oscuro -->
+      <div class="relative bg-black/90 rounded-lg overflow-hidden">
+        <!-- Botón para cerrar -->
+        <button
+          type="button"
+          class="btn btn-sm btn-circle btn-ghost absolute top-4 right-4 z-10 bg-black/50 hover:bg-black/70 text-white border-white/20"
+          (click)="closeImageModal()"
+          aria-label="Cerrar modal"
+        >
+          <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12" />
+          </svg>
+        </button>
+        
+        <!-- Imagen grande -->
+        <div class="flex items-center justify-center p-4 min-h-[50vh] max-h-[80vh]">
+          <img
+            [src]="selectedImage"
+            alt="Imagen en pantalla grande"
+            class="max-w-full max-h-[80vh] object-contain rounded-md shadow-md"
+            (error)="$event.target.style.display='none'"
+          />
+        </div>
+      </div>
+    </div>
+    <div class="modal-backdrop bg-black/80 backdrop-blur-sm" (click)="closeImageModal()"></div>
   </div>
 </div>
