@@ -1022,6 +1022,8 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     // Limpiar marcadores anteriores (sin mostrar mensaje)
     this.limpiarMarcadoresGuardadosInterno();
 
+    let cantidad_marcadores = this.marcadoresGuardados.length;
+
     if (this.marcadoresGuardados.length === 0) {
       this.mostrarAlerta('No hay marcadores para cargar', 'warning');
       return;
@@ -1032,6 +1034,7 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     this.loadingMensaje = 'Cargando marcadores en el mapa...';
 
     // Crear y agregar marcadores al mapa
+    console.log(this.marcadoresGuardados);
     this.marcadoresGuardados.forEach((marcadorData) => {
       const icono = this.categoryIcons[marcadorData.categoria] || this.defaultIcon;
       
@@ -1098,7 +1101,7 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     // Desactivar loading
     this.loadingVisible = false;
     this.cerrarModalGestionMarcadores();
-    this.mostrarAlerta(`Se cargaron ${this.marcadoresGuardados.length} marcador(es) en el mapa`, 'success');
+    this.mostrarAlerta(`Se cargaron ${cantidad_marcadores} marcador(es) en el mapa`, 'success');
 
     // Inicializar listeners de socket para tiempo real (solo si hay marcadores cargados)
     this.initSocketListeners();
