@@ -111,6 +111,9 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   // Wake Lock para evitar que la pantalla se apague en móviles
   private wakeLock: WakeLockSentinel | null = null;
 
+  // Listener para eventos personalizados desde popups de Leaflet
+  private imagePopupListener?: (event: any) => void;
+
   constructor(
     private geoService: GeoService,
     private apiService: ApiService,
@@ -183,11 +186,24 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     });
     this.initNotifications();
     this.initUbicacionesTiempoReal();
+    
+    // Listener para abrir modal de imagen desde popups de Leaflet
+    this.imagePopupListener = (event: any) => {
+      if (event.detail) {
+        this.openImageModal(event.detail);
+      }
+    };
+    window.addEventListener('openImageFromPopup', this.imagePopupListener);
   }
 
   ngOnDestroy(): void {
     // Desactivar Wake Lock
     this.desactivarWakeLock();
+    
+    // Remover listener de eventos personalizados
+    if (this.imagePopupListener) {
+      window.removeEventListener('openImageFromPopup', this.imagePopupListener);
+    }
     
     // Detener geolocalización
     this.geoService.stopTracking();
@@ -1050,11 +1066,15 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       if (marcadorData.archivo && this.isImage(marcadorData.archivo)) {
         const archivoUrl = this.getFileUrl(marcadorData.archivo);
         if (archivoUrl) {
+          // Escapar comillas simples en la URL para evitar problemas en el atributo onclick
+          const escapedUrl = archivoUrl.replace(/'/g, "\\'");
           popupContent += `
             <div style="margin-top: 8px;">
               <img src="${archivoUrl}" 
                    alt="Imagen adjunta" 
-                   style="max-width: 200px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block;">
+                   class="w-20 h-20 object-cover rounded-md cursor-pointer"
+                   onclick="window.dispatchEvent(new CustomEvent('openImageFromPopup', { detail: '${escapedUrl}' }))"
+                   style="max-width: 200px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block; cursor: pointer;">
             </div>
           `;
         }
@@ -1133,11 +1153,15 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     if (marcadorData.archivo && this.isImage(marcadorData.archivo)) {
       const archivoUrl = this.getFileUrl(marcadorData.archivo);
       if (archivoUrl) {
+        // Escapar comillas simples en la URL para evitar problemas en el atributo onclick
+        const escapedUrl = archivoUrl.replace(/'/g, "\\'");
         popupContent += `
           <div style="margin-top: 8px;">
             <img src="${archivoUrl}" 
                  alt="Imagen adjunta" 
-                 style="max-width: 200px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block;">
+                 class="w-20 h-20 object-cover rounded-md cursor-pointer"
+                 onclick="window.dispatchEvent(new CustomEvent('openImageFromPopup', { detail: '${escapedUrl}' }))"
+                 style="max-width: 200px; max-height: 150px; border-radius: 4px; object-fit: cover; display: block; cursor: pointer;">
           </div>
         `;
       }
