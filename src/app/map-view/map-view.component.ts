@@ -701,6 +701,79 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
+   * Mueve el marcador draggable al centro actual del mapa sin mover el mapa
+   * 
+   * Este método se ejecuta cuando el usuario hace clic en el botón "Mi ubicación"
+   * en el speed-dial. Obtiene el centro actual del mapa y mueve el marcador
+   * draggable a esa posición, manteniendo la capacidad de arrastre del marcador.
+   */
+  moverMarcadorAlCentro(): void {
+    // Verificar que el mapa esté inicializado
+    if (!this.map) {
+      console.warn('⚠️ No se puede mover el marcador: el mapa no está inicializado');
+      return;
+    }
+
+    // Obtener el centro actual del mapa
+    const center = this.map.getCenter();
+    
+    // Verificar que el centro sea válido
+    if (!center || !center.lat || !center.lng) {
+      console.warn('⚠️ No se puede mover el marcador: centro del mapa inválido');
+      return;
+    }
+
+    // Si el marcador draggable no existe, crearlo en el centro del mapa
+    if (!this.searchMarker) {
+      this.setupSearchMarker([center.lat, center.lng]);
+      console.log(`📍 Marcador draggable creado en el centro del mapa: [${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}]`);
+    } else {
+      // Mover el marcador existente al centro del mapa
+      this.searchMarker.setLatLng([center.lat, center.lng]);
+      console.log(`📍 Marcador draggable movido al centro del mapa: [${center.lat.toFixed(6)}, ${center.lng.toFixed(6)}]`);
+      
+      // Asegurarse de que el marcador siga siendo draggable
+      // (esto es redundante ya que se establece en setupSearchMarker, pero es una verificación de seguridad)
+      if (!this.searchMarker.dragging?.enabled()) {
+        this.searchMarker.dragging?.enable();
+        console.log('✅ Capacidad de arrastre del marcador verificada y habilitada');
+      }
+    }
+
+    // Actualizar la barra de búsqueda con la nueva ubicación mediante geocodificación inversa
+    // Esto proporciona feedback visual al usuario sobre la nueva posición
+    this.actualizarBarraBusquedaDesdeCoordenadas(center.lat, center.lng);
+  }
+
+  /**
+   * Actualiza la barra de búsqueda con la dirección correspondiente a las coordenadas dadas
+   * @param lat - Latitud
+   * @param lng - Longitud
+   */
+  private async actualizarBarraBusquedaDesdeCoordenadas(lat: number, lng: number): Promise<void> {
+    try {
+      const url = `https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&zoom=18&addressdetails=1`;
+      const res = await fetch(url, {
+        headers: {
+          'Accept-Language': 'es',
+        },
+      });
+      const data = await res.json();
+
+      if (data) {
+        this.searchQuery = this.formatReverseAddress(data, lat, lng);
+        this.searchResultValid = true;
+        this.searchError = null;
+      }
+    } catch (error) {
+      console.warn('⚠️ No se pudo obtener la dirección del centro del mapa:', error);
+      // En caso de error, mostrar las coordenadas
+      this.searchQuery = `${lat.toFixed(6)}, ${lng.toFixed(6)}`;
+      this.searchResultValid = true;
+    }
+  }
+
+  /**
    * Cierra el modal de marcador
    */
   cerrarModalMarcador(): void {

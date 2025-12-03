@@ -11,6 +11,7 @@ export class SpeedDialComponent {
   @Output() layerChange = new EventEmitter<string>();
   @Output() openMarkerModal = new EventEmitter<void>();
   @Output() loadSavedMarkers = new EventEmitter<void>();
+  @Output() miUbicacionClick = new EventEmitter<void>();
 
   // Claves de capas que existen en MapViewComponent.baseLayers
   private readonly capas: string[] = [
@@ -31,9 +32,12 @@ export class SpeedDialComponent {
     console.log('Acción: centrarMapa()');
   }
 
+  /**
+   * Emite evento cuando se hace clic en "Mi ubicación"
+   * El componente padre (MapViewComponent) manejará la lógica
+   */
   miUbicacion(): void {
-    // TODO: integrar con geolocalización / Leaflet
-    console.log('Acción: miUbicacion()');
+    this.miUbicacionClick.emit();
   }
 
   abrirFiltros(): void {
