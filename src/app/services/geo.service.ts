@@ -262,8 +262,18 @@ export class GeoService {
         });
         console.log('📍 Ubicación inicial enviada:', { userId, lat: coords.lat, lng: coords.lng, speed: coords.speed, accuracy: coords.accuracy });
       }
-    } catch (error) {
-      console.error('Error al enviar ubicación inicial:', error);
+    } catch (error: any) {
+      // Manejar errores de geolocalización de forma menos intrusiva
+      if (error?.code === 3) {
+        // Timeout: no es crítico, el seguimiento continuará en segundo plano
+        console.debug('ℹ️ Timeout al obtener ubicación inicial. El seguimiento continuará automáticamente.');
+      } else if (error?.code === 1) {
+        // Permiso denegado: ya se maneja en otros lugares
+        console.debug('ℹ️ Permiso de geolocalización no disponible aún.');
+      } else {
+        // Otros errores: solo loggear si no es un error común
+        console.warn('⚠️ No se pudo enviar ubicación inicial:', error?.message || 'Error desconocido');
+      }
     }
   }
 

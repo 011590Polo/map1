@@ -6,6 +6,25 @@
   <base href="/">
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <link rel="icon" type="image/x-icon" href="favicon.ico">
+  <script>
+    // Silenciar errores de WebSocket de Vite HMR cuando se accede desde dominio remoto
+    // Estos errores son normales y no afectan la funcionalidad de la aplicación
+    if (typeof window !== 'undefined') {
+      const originalError = console.error;
+      console.error = function(...args) {
+        const message = args[0]?.toString() || '';
+        // Filtrar errores de WebSocket de Vite HMR
+        if (message.includes('WebSocket connection') && 
+            (message.includes('wss://') || message.includes('ws://')) &&
+            (message.includes('vite') || message.includes('HMR'))) {
+          // Silenciar estos errores específicos
+          return;
+        }
+        // Mostrar otros errores normalmente
+        originalError.apply(console, args);
+      };
+    }
+  </script>
 </head>
 <body>
   <app-root></app-root>

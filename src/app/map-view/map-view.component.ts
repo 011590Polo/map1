@@ -104,6 +104,18 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   private iconPersona: L.Icon;
   private iconCarro: L.Icon;
 
+  // Sistema de movimiento avanzado para marcadores
+  private markerData: {
+    [userId: string]: {
+      velocityVector: { lat: number; lng: number };
+      lastUpdateTime: number;
+      estimatedPosition: L.LatLng;
+      lastRealPosition: L.LatLng;
+      animationFrame?: number;
+    }
+  } = {};
+  private deadReckoningInterval?: any;
+
   // Suscripciones de socket para tiempo real
   private socketSubscriptions: Subscription[] = [];
   private socketListenersInicializados: boolean = false;
@@ -194,6 +206,9 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       }
     };
     window.addEventListener('openImageFromPopup', this.imagePopupListener);
+
+    // Iniciar bucle de dead-reckoning para movimiento suave
+    this.startDeadReckoningLoop();
   }
 
   ngOnDestroy(): void {
@@ -225,13 +240,33 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     this.socketSubscriptions.forEach(sub => sub.unsubscribe());
     this.socketSubscriptions = [];
 
-    // Limpiar marcadores de usuarios
-    Object.values(this.markers).forEach(marker => {
-      if (this.map) {
+    // Limpiar marcadores de usuarios y sus datos de movimiento
+    Object.keys(this.markers).forEach(userId => {
+      const marker = this.markers[userId];
+      if (this.map && marker) {
         this.map.removeLayer(marker);
       }
+      // Limpiar datos de movimiento
+      if (this.markerData[userId]?.animationFrame) {
+        cancelAnimationFrame(this.markerData[userId].animationFrame);
+      }
+      delete this.markerData[userId];
     });
     this.markers = {};
+
+    // Detener bucle de dead-reckoning
+    if (this.deadReckoningInterval) {
+      clearInterval(this.deadReckoningInterval);
+      this.deadReckoningInterval = undefined;
+    }
+
+    // Limpiar datos de movimiento
+    Object.keys(this.markerData).forEach(userId => {
+      if (this.markerData[userId].animationFrame) {
+        cancelAnimationFrame(this.markerData[userId].animationFrame!);
+      }
+    });
+    this.markerData = {};
   }
 
   private initMap(): void {
@@ -1594,7 +1629,7 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
   }
 
   /**
-   * Pinta o actualiza la ubicación de un usuario en el mapa
+   * Pinta o actualiza la ubicación de un usuario en el mapa con movimiento premium
    */
   private pintarOActualizarUbicacion(data: { userId: string; lat: number; lng: number; speed: number; timestamp: number }): void {
     if (!this.map) return;
@@ -1613,9 +1648,20 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
     // Seleccionar ícono según el estado de movimiento
     const icon = isMoving ? this.iconCarro : this.iconPersona;
 
+    const newPos = L.latLng(lat, lng);
+    const now = Date.now();
+
     // Si no existe el marcador, crearlo
     if (!this.markers[userId]) {
       this.markers[userId] = L.marker([lat, lng], { icon }).addTo(this.map);
+      
+      // Inicializar datos de movimiento
+      this.markerData[userId] = {
+        velocityVector: { lat: 0, lng: 0 },
+        lastUpdateTime: now,
+        estimatedPosition: newPos,
+        lastRealPosition: newPos
+      };
       
       // Agregar popup con información del usuario
       const speedKmh = speed ? (speed * 3.6).toFixed(1) : '0.0';
@@ -1630,10 +1676,40 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
       
       console.log(`📍 Marcador creado para usuario ${userId} en [${lat}, ${lng}] - ${estado}`);
     } else {
-      // Solo actualizar ubicación e ícono
-      this.markers[userId]
-        .setLatLng([lat, lng])
-        .setIcon(icon);
+      // Obtener posición anterior
+      const oldPos = this.markerData[userId].lastRealPosition;
+      const deltaTime = Math.max(now - this.markerData[userId].lastUpdateTime, 1); // Mínimo 1ms para evitar división por cero
+
+      // Actualizar vector de velocidad y almacenarlo (solo si hay tiempo transcurrido significativo)
+      if (deltaTime > 0) {
+        const velocityLat = (newPos.lat - oldPos.lat) / deltaTime;
+        const velocityLng = (newPos.lng - oldPos.lng) / deltaTime;
+        this.markerData[userId].velocityVector = {
+          lat: velocityLat,
+          lng: velocityLng
+        };
+      }
+
+      // Calcular posición predicha
+      const predictedEnd = this.getPredictedPosition(oldPos, newPos);
+
+      // Animar marcador con movimiento premium
+      this.animateMarkerPremium(this.markers[userId], oldPos, predictedEnd, 350);
+
+      // Calcular y aplicar rotación
+      const angle = this.getAngle(oldPos, newPos);
+      this.rotateMarker(this.markers[userId], angle);
+
+      // Actualizar datos de movimiento
+      this.markerData[userId].lastUpdateTime = now;
+      this.markerData[userId].lastRealPosition = newPos;
+      this.markerData[userId].estimatedPosition = newPos;
+
+      // Actualizar ícono si cambió el estado de movimiento
+      const currentIcon = this.markers[userId].options.icon;
+      if ((isMoving && currentIcon !== this.iconCarro) || (!isMoving && currentIcon !== this.iconPersona)) {
+        this.markers[userId].setIcon(icon);
+      }
       
       // Actualizar popup con nueva información
       const speedKmh = speed ? (speed * 3.6).toFixed(1) : '0.0';
@@ -1646,6 +1722,151 @@ export class MapViewComponent implements AfterViewInit, OnDestroy {
         </div>
       `);
     }
+  }
+
+  /**
+   * Calcula la posición predicha extendiendo un 10% adicional en la dirección del movimiento
+   */
+  private getPredictedPosition(oldPos: L.LatLng, newPos: L.LatLng): L.LatLng {
+    const deltaLat = newPos.lat - oldPos.lat;
+    const deltaLng = newPos.lng - oldPos.lng;
+    
+    // Extender 10% adicional en la dirección del movimiento
+    const predictedLat = newPos.lat + (deltaLat * 0.1);
+    const predictedLng = newPos.lng + (deltaLng * 0.1);
+    
+    return L.latLng(predictedLat, predictedLng);
+  }
+
+  /**
+   * Anima el marcador con movimiento suave usando easing ease-out
+   */
+  private animateMarkerPremium(marker: L.Marker, start: L.LatLng, end: L.LatLng, duration: number = 350): void {
+    const startTime = performance.now();
+    const startLat = start.lat;
+    const startLng = start.lng;
+    const deltaLat = end.lat - startLat;
+    const deltaLng = end.lng - startLng;
+
+    // Cancelar animación anterior si existe
+    const markerId = Object.keys(this.markers).find(id => this.markers[id] === marker);
+    if (markerId && this.markerData[markerId]?.animationFrame) {
+      cancelAnimationFrame(this.markerData[markerId].animationFrame!);
+    }
+
+    const animate = (currentTime: number) => {
+      const elapsed = currentTime - startTime;
+      
+      if (elapsed < duration) {
+        // Curva ease-out: t = (elapsed / duration)^0.7
+        const t = Math.pow(elapsed / duration, 0.7);
+        
+        // Interpolación
+        const currentLat = startLat + (deltaLat * t);
+        const currentLng = startLng + (deltaLng * t);
+        
+        marker.setLatLng([currentLat, currentLng]);
+        
+        // Continuar animación
+        if (markerId) {
+          this.markerData[markerId].animationFrame = requestAnimationFrame(animate);
+        }
+      } else {
+        // Animación completada - asegurar posición final exacta
+        marker.setLatLng([end.lat, end.lng]);
+        if (markerId && this.markerData[markerId]) {
+          this.markerData[markerId].animationFrame = undefined;
+        }
+      }
+    };
+
+    if (markerId) {
+      this.markerData[markerId].animationFrame = requestAnimationFrame(animate);
+    }
+  }
+
+  /**
+   * Calcula el ángulo de dirección entre dos posiciones en grados
+   */
+  private getAngle(oldPos: L.LatLng, newPos: L.LatLng): number {
+    const deltaLat = newPos.lat - oldPos.lat;
+    const deltaLng = newPos.lng - oldPos.lng;
+    
+    // Calcular ángulo en radianes (atan2 devuelve -π a π)
+    const angleRad = Math.atan2(deltaLng, deltaLat);
+    
+    // Convertir a grados (0-360, donde 0° = Este, 90° = Norte, 180° = Oeste, 270° = Sur)
+    const angleDeg = (angleRad * 180 / Math.PI + 90) % 360;
+    
+    return angleDeg;
+  }
+
+  /**
+   * Rota el marcador según el ángulo de dirección
+   */
+  private rotateMarker(marker: L.Marker, angle: number): void {
+    const iconElement = (marker as any)._icon;
+    if (iconElement) {
+      iconElement.style.transform = `rotate(${angle}deg)`;
+      iconElement.style.transition = 'transform 0.2s ease-out';
+    }
+  }
+
+
+  /**
+   * Dead-reckoning: continúa el movimiento suavemente cuando hay pérdida de señal
+   */
+  private deadReckoning(marker: L.Marker, userId: string, deltaTime: number = 100): void {
+    if (!this.markerData[userId]) return;
+
+    const data = this.markerData[userId];
+    const timeSinceLastUpdate = Date.now() - data.lastUpdateTime;
+
+    // Solo aplicar dead-reckoning si han pasado más de 300ms sin datos
+    if (timeSinceLastUpdate > 300) {
+      // Calcular damping basado en el tiempo transcurrido
+      const damping = Math.max(0.85 - timeSinceLastUpdate / 5000, 0.50);
+
+      // Obtener velocidad actual del vector
+      const velocityLat = data.velocityVector.lat;
+      const velocityLng = data.velocityVector.lng;
+
+      // Si hay velocidad significativa, continuar movimiento
+      if (Math.abs(velocityLat) > 0.000001 || Math.abs(velocityLng) > 0.000001) {
+        // Aplicar damping a la velocidad
+        const dampedVelocityLat = velocityLat * damping;
+        const dampedVelocityLng = velocityLng * damping;
+
+        // Calcular nueva posición estimada
+        const estimatedLat = data.estimatedPosition.lat + (dampedVelocityLat * deltaTime);
+        const estimatedLng = data.estimatedPosition.lng + (dampedVelocityLng * deltaTime);
+
+        const newEstimatedPos = L.latLng(estimatedLat, estimatedLng);
+
+        // Animar suavemente hacia la posición estimada
+        this.animateMarkerPremium(marker, data.estimatedPosition, newEstimatedPos, 100);
+
+        // Actualizar posición estimada
+        data.estimatedPosition = newEstimatedPos;
+
+        // Actualizar vector de velocidad con damping
+        data.velocityVector.lat = dampedVelocityLat;
+        data.velocityVector.lng = dampedVelocityLng;
+      }
+    }
+  }
+
+  /**
+   * Inicia el bucle de actualización de dead-reckoning cada 100ms
+   */
+  private startDeadReckoningLoop(): void {
+    this.deadReckoningInterval = setInterval(() => {
+      for (const userId in this.markers) {
+        if (this.markers[userId] && this.markerData[userId]) {
+          this.deadReckoning(this.markers[userId], userId, 100);
+        }
+      }
+    }, 100);
   }
 
   /**
